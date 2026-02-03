@@ -137,6 +137,7 @@ public class TestDePersonaDAO {
         System.out.println("La persona ha sido actualizado y enviado a BD");
 
         // Luego se consulta a la BD para ver si los cambios han ocurrido
+        // COMO SE CREA UN NUEVO USUARIOBD ESTE NO SE ELIMINA PARA DEJAR RASTRO DE LOS CAMBIOS HECHOS
         Persona usuarioBD = pDao.leerPersonaID(idGenerado);
         assertEquals("Triple H", usuarioBD.getNombre(), "Fallo en la integracion");
 
