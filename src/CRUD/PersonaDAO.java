@@ -2,13 +2,14 @@ package CRUD;
 
 // Se importan las librerias necesarias
 import java.sql.*;
-import java.util.*;
+
 import ConexionDB.Conexion;
 import Elementos.Persona;
 
 // Se declara la creacion de la clase Persona Data Access Object
 public class PersonaDAO {
 
+    // C (CREATE)
     // Metodo el cual busca instertar una persona a la DB
     public boolean insertarPersona(Persona persona) {
         // Se declaran las variables necesarias para este metodo
@@ -70,6 +71,72 @@ public class PersonaDAO {
             }
         }
         return resultado;
+    }
+
+    // R (READ)
+    // Metodo para buscar una persona por su ID y recuperar sus telefonos
+    public Persona leerPersonaID(int id) {
+        // Se declaran las variables necesarias
+        Connection conexion = null;
+        PreparedStatement psPersona = null;
+        PreparedStatement psTelefono = null;
+        ResultSet rsPersona = null;
+        ResultSet rsTelefono = null;
+        Persona personaEncontrada = null; // Aqui se guarda el resultado final
+
+        try {
+            // Busca realizar la conexion con la DB
+            conexion = Conexion.hacerConexion();
+
+            // En este apartado se buscan los datos principales en la tabla Personas
+            String dbBuscar = "SELECT * FROM Personas WHERE id = ?";
+            psPersona = conexion.prepareStatement(dbBuscar);
+            psPersona.setInt(1, id); // Se asigna el ID objetivo al ?
+
+            rsPersona = psPersona.executeQuery();
+
+            // Si existe una fila con ese ID, se crea el objeto
+            if (rsPersona.next()) {
+                // Se recuperan los datos de las columnas de la DB
+                int idDb = rsPersona.getInt("id");
+                String nombreDb = rsPersona.getString("nombre");
+                String direccionDb = rsPersona.getString("direccion");
+
+                // Se construye a la persona con los datos recuperados
+                // En este punto se crea exactamente la persona que se consulto pero faltan sus telefonos asignados
+                personaEncontrada = new Persona(idDb, nombreDb, direccionDb);
+            }
+
+            // Proceso para encontrar los telefonos asignados a la persona creada
+            if (personaEncontrada != null) {
+                String dbTel = "SELECT telefono FROM Telefonos WHERE personaId = ?";
+                psTelefono = conexion.prepareStatement(dbTel);
+                psTelefono.setInt(1, id);
+
+                rsTelefono = psTelefono.executeQuery();
+
+                // Recorremos todos los telefonos que encuentre (porque pueden ser varios)
+                while (rsTelefono.next()) {
+                    String numero = rsTelefono.getString("telefono");
+                    // Se agrega el numero a la lista de la persona encontrada
+                    personaEncontrada.agregarTelefono(numero);
+                }
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error al leer persona: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // Nuevamente se cierran los recursos para liberar memoria
+            try {
+                if (rsPersona != null) rsPersona.close();
+                if (rsTelefono != null) rsTelefono.close();
+                if (psPersona != null) psPersona.close();
+                if (psTelefono != null) psTelefono.close();
+                if (conexion != null) conexion.close();
+            } catch (Exception e) {}
+        }
+        return personaEncontrada;
     }
 
 }
