@@ -54,4 +54,61 @@ public class TestDePersonaDAO {
         System.out.println("Prueba de lectura exitosa, ya se encontro a: " + personaRecuperada.getNombre());
     }
 
+    @Test
+    public void testActualizar() {
+        // Nuevamente en este test tambien se crea y se inserta una persona inicial
+        PersonaDAO testDAO = new PersonaDAO();
+        Persona personaParaEditar = new Persona("Marina Del Pilar", "Palacio Municipal");
+        personaParaEditar.agregarTelefono("123-456-7890"); // Telefono a actualizar
+
+        testDAO.insertarPersona(personaParaEditar);
+        int idObjetivo = personaParaEditar.getId();
+
+        System.out.println("Se inserto a la persona: " + personaParaEditar.getNombre());
+
+        // Ahora en este apartado se cambian los datos de la persona
+        personaParaEditar.setNombre("Gobernadora");
+        personaParaEditar.setDireccion("Baja California");
+
+        // Se limpia la lista de telefonos asociados que es vieja y se pone una nueva
+        personaParaEditar.getTelefonos().clear();
+        personaParaEditar.agregarTelefono("098-765-4321"); // Telefono nuevo
+
+        // Se crea una variable para saber si al llamar al metodo actualizar del DAO si funciona
+        boolean seActualizo = testDAO.actualizarPersona(personaParaEditar);
+
+        // Se verifica el estado
+        assertTrue(seActualizo, "Error: El metodo actualizar devolvio false");
+
+        // Se lee para ver si se efectuaron los cambios y se comprueba cada uno de los cambios.
+        Persona personaEnBD = testDAO.leerPersonaID(idObjetivo);
+        assertEquals("Gobernadora", personaEnBD.getNombre(), "Error: El nombre no se actualizo en BD");
+        assertEquals("Baja California", personaEnBD.getDireccion(), "Error: La direccion no se actualizo");
+        // Se verifica que el telefono viejo ya no este y este el nuevo
+        assertEquals("098-765-4321", personaEnBD.getTelefonos().get(0), "Error: Los telefonos no se actualizaron correctamente");
+
+        System.out.println("Prueba de actualizacion es correcta, el nuevo nombre es: " + personaEnBD.getNombre());
+    }
+
+    @Test
+    public void testEliminar() {
+        // Ahora para finalizar las pruebas de unidad nuevamente se crea una persona temporal
+        PersonaDAO testDAO = new PersonaDAO();
+        Persona personaParaBorrar = new Persona("EliminarTest", "Calle borrada");
+        testDAO.insertarPersona(personaParaBorrar);
+        int idObjetivo = personaParaBorrar.getId();
+
+        // Se llama el metodo para borrar y se verifica que sucedio
+        boolean seElimino = testDAO.eliminarPersona(idObjetivo);
+        assertTrue(seElimino, "Error: El metodo eliminar devolvio false");
+
+        // Como segunda prueba se intenta buscar a la persona en la BD
+        Persona personaBuscada = testDAO.leerPersonaID(idObjetivo);
+
+        // Para finalizar la personaBuscada deberia ser NULL porque ya no existe
+        assertNull(personaBuscada, "Error: La persona sigue existiendo en la DB despues de borrarla");
+
+        System.out.println("La prueba de eliminacion fue exitosa, la persona ha sido silenciada...");
+    }
+
 }

@@ -139,4 +139,101 @@ public class PersonaDAO {
         return personaEncontrada;
     }
 
+    // U (UPDATE)
+    // Metodo para actualizar los datos de una persona y su lista de telefonos
+    public boolean actualizarPersona(Persona persona) {
+        Connection conexion = null;
+        PreparedStatement psActualizar = null;
+        PreparedStatement psBorrarTel = null;
+        PreparedStatement psInsertarTel = null;
+        boolean resultado = false;
+
+        try {
+            conexion = Conexion.hacerConexion();
+
+            // Primero se actualizan los datos clave tanto nombre como direccion
+            String dbActualizar = "UPDATE Personas SET nombre = ?, direccion = ? WHERE id = ?";
+            psActualizar = conexion.prepareStatement(dbActualizar);
+            psActualizar.setString(1, persona.getNombre());
+            psActualizar.setString(2, persona.getDireccion());
+            psActualizar.setInt(3, persona.getId());
+
+            // Posteriormente se ejecuta la actualizacion, en este caso si se devuelve un 0, significa que el ID no existe.
+            int filasAfectadas = psActualizar.executeUpdate();
+
+            // Si se encontro la persona y se actualizo, se procede con los telefonos
+            if (filasAfectadas > 0) {
+
+                // Se borran todos los numeros asociados anteriormente para evitar errores
+                String dbBorrarTel = "DELETE FROM Telefonos WHERE personaId = ?";
+                psBorrarTel = conexion.prepareStatement(dbBorrarTel);
+                psBorrarTel.setInt(1, persona.getId());
+                psBorrarTel.executeUpdate();
+
+                // Nuevamente se vuelven a meter los telefonos
+                if (!persona.getTelefonos().isEmpty()) {
+                    String dbInsertarTel = "INSERT INTO Telefonos (personaId, telefono) VALUES (?, ?)";
+                    psInsertarTel = conexion.prepareStatement(dbInsertarTel);
+
+                    for (String telefono : persona.getTelefonos()) {
+                        psInsertarTel.setInt(1, persona.getId());
+                        psInsertarTel.setString(2, telefono);
+                        psInsertarTel.executeUpdate();
+                    }
+                }
+                resultado = true;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error al actualizar persona: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // Como se ha hecho anteriormente despues de cada proceso, se liberan los recursos utilizados
+            try {
+                if (psActualizar != null) psActualizar.close();
+                if (psBorrarTel != null) psBorrarTel.close();
+                if (psInsertarTel != null) psInsertarTel.close();
+                if (conexion != null) conexion.close();
+            } catch (Exception e) {}
+        }
+        return resultado;
+    }
+
+    // D (DELETE)
+    // Metodo para eliminar una persona de la base de datos utilizando mediante su ID
+    public boolean eliminarPersona(int id) {
+        Connection conexion = null;
+        PreparedStatement psEliminar = null;
+        boolean resultado = false;
+
+        try {
+            conexion = Conexion.hacerConexion();
+
+            // Se prepara la accion de la DB para borrar pero aqui sucede algo particular
+            // al borrar la persona, sus telefonos se eliminan automaticamente.
+            // esto succede porque se utiliza ON DELETE CASCADE que borra la tabla padre
+            String dbEliminar = "DELETE FROM Personas WHERE id = ?";
+            psEliminar = conexion.prepareStatement(dbEliminar);
+            psEliminar.setInt(1, id);
+
+            // Se ejecuta la instruccion de eliminar
+            int filasAfectadas = psEliminar.executeUpdate();
+
+            if (filasAfectadas > 0) {
+                resultado = true;
+            }
+
+        } catch (Exception e) {
+            System.out.println("Error al eliminar persona: " + e.getMessage());
+            e.printStackTrace();
+        } finally {
+            // Se cierran los recursos
+            try {
+                if (psEliminar != null) psEliminar.close();
+                if (conexion != null) conexion.close();
+            } catch (Exception e) {}
+        }
+        return resultado;
+    }
+
 }
