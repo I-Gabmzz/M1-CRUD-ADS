@@ -111,4 +111,45 @@ public class TestDePersonaDAO {
         System.out.println("La prueba de eliminacion fue exitosa, la persona ha sido silenciada...");
     }
 
+    @Test
+    public void testIntegracionCicloCompleto() {
+        System.out.println("Test de integracion");
+
+        // Primero se crea la persona y el respectivo usuario
+        PersonaDAO pDao = new PersonaDAO();
+        Persona usuario = new Persona("John Cena", "Calle WWE");
+
+        // Posteriormente se inserta al usuario
+        pDao.insertarPersona(usuario);
+        int idGenerado = usuario.getId();
+
+        assertTrue(idGenerado > 0, "Fallo en la integracion");
+        System.out.println("Se ha insertado correctamente con el ID: " + idGenerado);
+
+        // Ahora es momento de modificar el usuario por lo tanto, cambiamos el nombre y agregamos telefonos
+        usuario.setNombre("Triple H");
+        usuario.agregarTelefono("686-777-1234");
+        usuario.agregarTelefono("686-888-1234");
+
+        boolean actualizado = pDao.actualizarPersona(usuario);
+
+        assertTrue(actualizado, "Fallo en la integracion");
+        System.out.println("La persona ha sido actualizado y enviado a BD");
+
+        // Luego se consulta a la BD para ver si los cambios han ocurrido
+        Persona usuarioBD = pDao.leerPersonaID(idGenerado);
+        assertEquals("Triple H", usuarioBD.getNombre(), "Fallo en la integracion");
+
+        assertEquals("686-777-1234", usuarioBD.getTelefonos().get(0), "Fallo en la integracion");
+        assertEquals("686-888-1234", usuarioBD.getTelefonos().get(1), "Fallo en la integracion");
+
+        System.out.println("Se ha consultado la persona y los datos en la BD coinciden");
+
+        // Por ultimo en el ciclo del programa se elimina la persona y se verifica que este ha sido silenciado
+        boolean eliminado = pDao.eliminarPersona(idGenerado);
+        assertTrue(eliminado, "Fallo en la integracion");
+        assertNull(pDao.leerPersonaID(idGenerado), "Fallo en la integracion");
+        System.out.println("El ciclo y la integracion ha finalizado correctamente");
+    }
+
 }

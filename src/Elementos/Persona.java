@@ -40,5 +40,6 @@ public class Persona {
     public void setDireccion(String direccion) { this.direccion = direccion; }
 
     public ArrayList<String> getTelefonos() { return telefonos; }
+    public void setTelefonos(ArrayList<String> telefonos) { this.telefonos = telefonos; }
 
 }

@@ -1,7 +1,10 @@
 package ConexionDB;
 
 // Libreria necesaria para el uso de la DB y la conexion
+import Elementos.Persona;
+
 import java.sql.*;
+import java.util.*;
 
 public class Conexion {
 
@@ -27,5 +30,47 @@ public class Conexion {
             System.out.println("Error al conectar con la base de datos");
             e.printStackTrace();        }
         return conexion;
+    }
+
+    // Metodo que recupera todos los registros de personas al iniciar la aplicacion
+    public static List<Persona> cargarBaseDeDatos() {
+        // Lista donde se guardaran las personas recuperadas
+        List<Persona> lista = new ArrayList<>();
+        Connection conexion = null;
+        Statement declaracion = null;
+        ResultSet resultado = null;
+
+        try {
+            // Se inicia la conexion
+            conexion = hacerConexion();
+
+            // Solicitud de la DB para seleccionar todas las filas de la tabla Personas
+            String solicitudDB = "SELECT * FROM Personas";
+            declaracion = conexion.createStatement();
+            resultado = declaracion.executeQuery(solicitudDB);
+
+            // Se recorren los resultados obtenidos uno por uno
+            while (resultado.next()) {
+                // Se crea un objeto Persona con los datos de la fila actual
+                Persona persona = new Persona(
+                        resultado.getInt("id"),
+                        resultado.getString("nombre"),
+                        resultado.getString("direccion")
+                );
+                // Se agrega la persona a la lista final
+                lista.add(persona);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            // Se cierran los recursos para liberar memoria
+            try {
+                if (resultado != null) resultado.close();
+                if (declaracion != null) declaracion.close();
+                if (conexion != null) conexion.close();
+            } catch (Exception e) {}
+        }
+        // Se devuelve la lista completa
+        return lista;
     }
 }

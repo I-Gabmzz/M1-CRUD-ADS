@@ -1,0 +1,109 @@
+
+/* Fuente principal */
+.root {
+    -fx-font-family: "Segoe UI", sans-serif;
+}
+
+/* Barra superior */
+.barra-titulo {
+    -fx-background-color: #0D47A1;
+}
+
+/* Barra lateral derecha */
+.barra-lateral {
+    -fx-background-color: #1565C0;
+}
+
+/* Titulos centrados */
+.label-centrado {
+    -fx-text-fill: #0D47A1;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+    -fx-padding: 0 0 5 0;
+}
+
+/* --- Botones --- */
+
+/* Boton blanco principal */
+.boton-blanco {
+    -fx-background-color: white;
+    -fx-text-fill: #1565C0;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+/* Efecto al pasar mouse */
+.boton-blanco:hover {
+    -fx-background-color: #E3F2FD;
+}
+/* Efecto al hacer clic */
+.boton-blanco:pressed {
+    -fx-background-color: #BBDEFB;
+}
+
+/* Boton azul secundario */
+.boton-azul-claro {
+    -fx-background-color: #90CAF9;
+    -fx-text-fill: #0D47A1;
+    -fx-font-weight: bold;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+.boton-azul-claro:hover {
+    -fx-background-color: #64B5F6;
+}
+
+/* --- Tablas --- */
+
+/* Configuracion general de tabla */
+.table-view {
+    -fx-base: white;
+    -fx-control-inner-background: white;
+    -fx-background-color: white;
+    -fx-table-cell-border-color: transparent;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+}
+
+/* Fondo de titulos */
+.table-view .column-header-background {
+    -fx-background-color: #F5F5F5;
+    -fx-border-color: transparent transparent #E0E0E0 transparent;
+}
+
+/* Texto de titulo */
+.table-view .column-header .label {
+    -fx-text-fill: #424242;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+}
+
+/* Alineacion de celdas */
+.table-cell {
+    -fx-alignment: CENTER-LEFT;
+    -fx-padding: 0 0 0 10;
+}
+
+/* --- Efectos de seleccion --- */
+
+/* Color de fila seleccionada */
+.table-row-cell:selected {
+    -fx-background-color: #BBDEFB;
+    -fx-table-cell-border-color: transparent;
+}
+
+/* Color de texto al seleccionar */
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #0D47A1;
+}
+.table-row-cell:selected .text {
+    -fx-fill: #0D47A1;
+}
+
+/* Espacio vacio */
+.table-view .filler {
+    -fx-background-color: white;
+}
