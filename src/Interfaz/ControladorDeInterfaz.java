@@ -23,14 +23,19 @@ public class ControladorDeInterfaz implements Initializable {
     @FXML private TableView<Persona> tablaPersonas;
     @FXML private TableColumn<Persona, Integer> columnaId;
     @FXML private TableColumn<Persona, String> columnaNombre;
-    @FXML private TableColumn<Persona, String> columnaDireccion;
+
     // Tabla de telefonos y su columna
     @FXML private TableView<String> tablaTelefonos;
     @FXML private TableColumn<String, String> columnaNumero;
 
+    // Tabla de direcciones y su columna
+    @FXML private TableView<String> tablaDirecciones;
+    @FXML private TableColumn<String, String> columnaDireccionDetalle;
+
     private PersonaDAO gestorDatos;
     private ObservableList<Persona> listaPersonasInterfaz;
     private ObservableList<String> listaTelefonosInterfaz;
+    private ObservableList<String> listaDireccionesInterfaz;
 
     // Metodo de inicializacion que se ejecuta automaticamente al abrir la ventana
     @Override
@@ -39,6 +44,7 @@ public class ControladorDeInterfaz implements Initializable {
         gestorDatos = new PersonaDAO();
         listaPersonasInterfaz = FXCollections.observableArrayList();
         listaTelefonosInterfaz = FXCollections.observableArrayList();
+        listaDireccionesInterfaz = FXCollections.observableArrayList();
         configurarTablas();
 
         // Se obtienen todos los registros de la base de datos y se agregan a la lista
@@ -47,11 +53,12 @@ public class ControladorDeInterfaz implements Initializable {
         // Se agrega un listener para detectar cuando el usuario selecciona una fila en la tabla de personas
         tablaPersonas.getSelectionModel().selectedItemProperty().addListener((obs, anterior, seleccion) -> {
             if (seleccion != null) {
-                // Si se selecciona a alguien, se cargan sus telefonos
-                cargarTelefonosDe(seleccion);
+                // Si se selecciona a alguien, se cargan sus telefonos y direcciones
+                cargarDatosDetalladosDe(seleccion);
             } else {
-                // Si se deselecciona, se limpia la tabla de telefonos
+                // Si se deselecciona, se limpian las tablas de datos
                 listaTelefonosInterfaz.clear();
+                listaDireccionesInterfaz.clear();
             }
         });
     }
@@ -60,26 +67,35 @@ public class ControladorDeInterfaz implements Initializable {
     private void configurarTablas() {
         columnaId.setCellValueFactory(new PropertyValueFactory<>("id"));
         columnaNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
-        columnaDireccion.setCellValueFactory(new PropertyValueFactory<>("direccion"));
 
-        // Configuracion para la columna de telefonos
+        // Configuracion para la columna de telefonos y direcciones
         columnaNumero.setCellValueFactory(dato -> new SimpleStringProperty(dato.getValue()));
+        columnaDireccionDetalle.setCellValueFactory(dato -> new SimpleStringProperty(dato.getValue()));
 
         // Se asignan las listas a los componentes de la interfaz
         tablaPersonas.setItems(listaPersonasInterfaz);
         tablaTelefonos.setItems(listaTelefonosInterfaz);
+        tablaDirecciones.setItems(listaDireccionesInterfaz);
     }
 
-    // Metodo para obtener y mostrar los telefonos de una persona seleccionada
-    private void cargarTelefonosDe(Persona persona) {
+    // Metodo para obtener y mostrar los telefonos y direcciones de una persona seleccionada
+    private void cargarDatosDetalladosDe(Persona persona) {
         listaTelefonosInterfaz.clear();
+        listaDireccionesInterfaz.clear();
         // Se consulta a la base de datos para asegurar que tenemos los respectivos datos
         Persona personaCompleta = gestorDatos.leerPersonaID(persona.getId());
 
-        if (personaCompleta != null && personaCompleta.getTelefonos() != null) {
+        if (personaCompleta != null) {
             // Se actualiza la lista y el objeto
-            listaTelefonosInterfaz.addAll(personaCompleta.getTelefonos());
-            persona.setTelefonos(personaCompleta.getTelefonos());
+            if (personaCompleta.getTelefonos() != null) {
+                listaTelefonosInterfaz.addAll(personaCompleta.getTelefonos());
+                persona.setTelefonos(personaCompleta.getTelefonos());
+            }
+            // Cargar direcciones
+            if (personaCompleta.getDirecciones() != null) {
+                listaDireccionesInterfaz.addAll(personaCompleta.getDirecciones());
+                persona.setDirecciones(personaCompleta.getDirecciones());
+            }
         }
     }
 
@@ -87,37 +103,21 @@ public class ControladorDeInterfaz implements Initializable {
     @FXML
     void accionBotonAñadirPersona(ActionEvent event) {
         // Se crea una ventana emergente
-        Dialog<Persona> dialogo = new Dialog<>();
+        TextInputDialog dialogo = new TextInputDialog();
         dialogo.setTitle("Nueva Persona");
-        dialogo.setHeaderText("Ingresa los datos:");
-        ButtonType tipoBotonGuardar = new ButtonType("Guardar", ButtonBar.ButtonData.OK_DONE);
-        dialogo.getDialogPane().getButtonTypes().addAll(tipoBotonGuardar, ButtonType.CANCEL);
-        GridPane panel = new GridPane();
-        panel.setHgap(10); panel.setVgap(10);
+        dialogo.setHeaderText("Crear nuevo contacto");
+        dialogo.setContentText("Nombre completo:");
 
-        TextField campoNombre = new TextField();
-        TextField campoDireccion = new TextField();
-        panel.add(new Label("Nombre:"), 0, 0);
-        panel.add(campoNombre, 1, 0);
-        panel.add(new Label("Direccion:"), 0, 1);
-        panel.add(campoDireccion, 1, 1);
+        Optional<String> resultado = dialogo.showAndWait();
+        resultado.ifPresent(nombre -> {
+            if (!nombre.isEmpty()) {
+                // Creamos persona sin direcciones iniciales (se agregan con el otro boton)
+                Persona nuevaPersona = new Persona(nombre);
 
-        dialogo.getDialogPane().setContent(panel);
-
-        // Se convierten los datos insertados en la ventana en una Persona
-        dialogo.setResultConverter(botonPresionado -> {
-            if (botonPresionado == tipoBotonGuardar) {
-                return new Persona(campoNombre.getText(), campoDireccion.getText());
-            }
-            return null;
-        });
-
-        Optional<Persona> resultado = dialogo.showAndWait();
-        resultado.ifPresent(nuevaPersona -> {
-            // Si el usuario se guardo, se inserta en la base de datos
-            if (gestorDatos.insertarPersona(nuevaPersona)) {
-                listaPersonasInterfaz.add(nuevaPersona);
-                tablaPersonas.getSelectionModel().select(nuevaPersona);
+                if (gestorDatos.insertarPersona(nuevaPersona)) {
+                    listaPersonasInterfaz.add(nuevaPersona);
+                    tablaPersonas.getSelectionModel().select(nuevaPersona);
+                }
             }
         });
     }
@@ -130,35 +130,16 @@ public class ControladorDeInterfaz implements Initializable {
         if (personaSeleccionada == null) { mostrarMensaje("Error", "Selecciona a alguien primero"); return; }
 
         // Se configura la ventana de modificacion
-        Dialog<Persona> dialogo = new Dialog<>();
+        TextInputDialog dialogo = new TextInputDialog(personaSeleccionada.getNombre());
         dialogo.setTitle("Editar");
-        dialogo.setHeaderText("Modificar a: " + personaSeleccionada.getNombre());
-        ButtonType botonActualizar = new ButtonType("Actualizar", ButtonBar.ButtonData.OK_DONE);
-        dialogo.getDialogPane().getButtonTypes().addAll(botonActualizar, ButtonType.CANCEL);
-        GridPane panel = new GridPane();
-        panel.setHgap(10); panel.setVgap(10);
+        dialogo.setHeaderText("Modificar nombre de ID: " + personaSeleccionada.getId());
+        dialogo.setContentText("Nuevo nombre:");
 
-        // Se cargan los campos con la informacion actual
-        TextField campoNombre = new TextField(personaSeleccionada.getNombre());
-        TextField campoDireccion = new TextField(personaSeleccionada.getDireccion());
-        panel.add(new Label("Nombre:"), 0, 0); panel.add(campoNombre, 1, 0);
-        panel.add(new Label("Direccion:"), 0, 1); panel.add(campoDireccion, 1, 1);
-        dialogo.getDialogPane().setContent(panel);
-
-        dialogo.setResultConverter(boton -> {
-            if (boton == botonActualizar) {
-                // Se actualizan los datos de la persona en la interfaz
-                personaSeleccionada.setNombre(campoNombre.getText());
-                personaSeleccionada.setDireccion(campoDireccion.getText());
-                return personaSeleccionada;
-            }
-            return null;
-        });
-
-        Optional<Persona> resultado = dialogo.showAndWait();
-        resultado.ifPresent(persona -> {
+        Optional<String> resultado = dialogo.showAndWait();
+        resultado.ifPresent(nuevoNombre -> {
+            personaSeleccionada.setNombre(nuevoNombre);
             // Se envian los cambios a la base de datos
-            if (gestorDatos.actualizarPersona(persona)) {
+            if (gestorDatos.actualizarPersona(personaSeleccionada)) {
                 tablaPersonas.refresh(); // Se refresca la tabla de la interfaz
             }
         });
@@ -215,13 +196,14 @@ public class ControladorDeInterfaz implements Initializable {
         Alert alerta = new Alert(Alert.AlertType.CONFIRMATION);
         alerta.setTitle("Eliminar");
         alerta.setHeaderText("¿Borrar a " + persona.getNombre() + "?");
-        alerta.setContentText("Se borraran tambien sus telefonos.");
+        alerta.setContentText("Se borraran tambien sus telefonos y direcciones.");
 
         if (alerta.showAndWait().get() == ButtonType.OK) {
             // Se elimina de la base de datos y de las listas de la interfaz
             if (gestorDatos.eliminarPersona(persona.getId())) {
                 listaPersonasInterfaz.remove(persona);
                 listaTelefonosInterfaz.clear();
+                listaDireccionesInterfaz.clear();
             }
         }
     }
@@ -244,7 +226,7 @@ public class ControladorDeInterfaz implements Initializable {
                 persona.agregarTelefono(numero);
                 // Se usa actualizarPersona para guardar los cambios en la BD
                 if (gestorDatos.actualizarPersona(persona)) {
-                    cargarTelefonosDe(persona);
+                    cargarDatosDetalladosDe(persona);
                 }
             }
         });
@@ -265,7 +247,46 @@ public class ControladorDeInterfaz implements Initializable {
         persona.getTelefonos().remove(numero);
         // Se actualiza la base de datos con la nueva lista
         if (gestorDatos.actualizarPersona(persona)) {
-            cargarTelefonosDe(persona);
+            cargarDatosDetalladosDe(persona);
+        }
+    }
+
+    // Accion para agregar una direccion
+    @FXML
+    void accionBotonAñadirDireccion(ActionEvent event) {
+        Persona persona = tablaPersonas.getSelectionModel().getSelectedItem();
+        if (persona == null) { mostrarMensaje("Error", "Selecciona una persona"); return; }
+
+        TextInputDialog dialogo = new TextInputDialog();
+        dialogo.setTitle("Nueva Direccion");
+        dialogo.setHeaderText("Agregar direccion a: " + persona.getNombre());
+        dialogo.setContentText("Direccion:");
+
+        Optional<String> resultado = dialogo.showAndWait();
+        resultado.ifPresent(direccion -> {
+            if (!direccion.isEmpty()) {
+                persona.agregarDireccion(direccion);
+                // El DAO verifica si existe y vincula
+                if (gestorDatos.actualizarPersona(persona)) {
+                    cargarDatosDetalladosDe(persona);
+                }
+            }
+        });
+    }
+
+    // Accion para eliminar una direccion
+    @FXML
+    void accionBotonEliminarDireccion(ActionEvent event) {
+        Persona persona = tablaPersonas.getSelectionModel().getSelectedItem();
+        String direccion = tablaDirecciones.getSelectionModel().getSelectedItem();
+
+        if (persona == null || direccion == null) { mostrarMensaje("Error", "Selecciona una direccion"); return; }
+
+        // Removemos la direccion de la lista de la persona
+        persona.getDirecciones().remove(direccion);
+        // Al actualizar, el DAO eliminara el vinculo en la tabla intermedia
+        if (gestorDatos.actualizarPersona(persona)) {
+            cargarDatosDetalladosDe(persona);
         }
     }
 

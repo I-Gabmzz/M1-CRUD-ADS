@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="650.0" prefWidth="1000.0" stylesheets="@Estilos.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Interfaz.ControladorDeInterfaz">
+<BorderPane prefHeight="700.0" prefWidth="1100.0" stylesheets="@Estilos.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Interfaz.ControladorDeInterfaz">
 
     <top>
         <HBox alignment="CENTER" prefHeight="60.0" styleClass="barra-titulo">
@@ -22,32 +22,39 @@
     </top>
 
     <right>
-        <VBox alignment="TOP_CENTER" prefWidth="250.0" spacing="15.0" styleClass="barra-lateral" BorderPane.alignment="CENTER">
-            <padding> <Insets bottom="20.0" left="20.0" right="20.0" top="30.0" /> </padding>
+        <VBox alignment="TOP_CENTER" prefWidth="260.0" spacing="12.0" styleClass="barra-lateral" BorderPane.alignment="CENTER">
+            <padding> <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" /> </padding>
             <children>
 
-                <Label text="ACCIONES" textFill="WHITE">
+                <Label text="PERSONAS" textFill="WHITE">
                     <font> <Font name="System Bold" size="18.0" /> </font>
                 </Label>
 
-                <Button fx:id="botonAnadir" onAction="#accionBotonAñadirPersona" maxWidth="Infinity" prefHeight="45.0" styleClass="boton-blanco" text="ANADIR PERSONA" />
-                <Button fx:id="botonBuscar" onAction="#accionBotonBuscarPersona" maxWidth="Infinity" prefHeight="45.0" styleClass="boton-blanco" text="BUSCAR" />
-                <Button fx:id="botonModificar" onAction="#accionBotonModificarPersona" maxWidth="Infinity" prefHeight="45.0" styleClass="boton-blanco" text="MODIFICAR DATOS" />
-                <Button fx:id="botonEliminar" onAction="#accionBotonEliminarPersona" maxWidth="Infinity" prefHeight="45.0" styleClass="boton-blanco" text="ELIMINAR PERSONA" />
+                <Button fx:id="botonAnadir" onAction="#accionBotonAñadirPersona" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-blanco" text="ANADIR PERSONA" />
+                <Button fx:id="botonBuscar" onAction="#accionBotonBuscarPersona" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-blanco" text="BUSCAR" />
+                <Button fx:id="botonModificar" onAction="#accionBotonModificarPersona" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-blanco" text="MODIFICAR NOMBRE" />
+                <Button fx:id="botonEliminar" onAction="#accionBotonEliminarPersona" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-blanco" text="ELIMINAR PERSONA" />
 
-                <HBox prefHeight="30.0" /> <Label text="TELEFONOS" textFill="WHITE">
+                <HBox prefHeight="15.0" /> <Label text="TELEFONOS" textFill="WHITE">
                 <font> <Font name="System Bold" size="16.0" /> </font>
             </Label>
 
-                <Button fx:id="botonAnadirTelefono" onAction="#accionBotonAñadirTelefono" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-azul-claro" text="AGREGAR NUMERO" />
-                <Button fx:id="botonEliminarTelefono" onAction="#accionBotonEliminarTelefono" maxWidth="Infinity" prefHeight="40.0" styleClass="boton-azul-claro" text="QUITAR NUMERO" />
+                <Button fx:id="botonAnadirTelefono" onAction="#accionBotonAñadirTelefono" maxWidth="Infinity" prefHeight="35.0" styleClass="boton-azul-claro" text="AGREGAR TELEFONO" />
+                <Button fx:id="botonEliminarTelefono" onAction="#accionBotonEliminarTelefono" maxWidth="Infinity" prefHeight="35.0" styleClass="boton-azul-claro" text="QUITAR TELEFONO" />
+
+                <HBox prefHeight="15.0" /> <Label text="DIRECCIONES" textFill="WHITE">
+                <font> <Font name="System Bold" size="16.0" /> </font>
+            </Label>
+
+                <Button fx:id="botonAnadirDireccion" onAction="#accionBotonAñadirDireccion" maxWidth="Infinity" prefHeight="35.0" styleClass="boton-azul-claro" text="AGREGAR DIRECCION" />
+                <Button fx:id="botonEliminarDireccion" onAction="#accionBotonEliminarDireccion" maxWidth="Infinity" prefHeight="35.0" styleClass="boton-azul-claro" text="QUITAR DIRECCION" />
 
             </children>
         </VBox>
     </right>
 
     <center>
-        <SplitPane dividerPositions="0.6">
+        <SplitPane dividerPositions="0.55">
             <items>
                 <VBox spacing="5.0" style="-fx-background-color: white;">
                     <padding> <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" /> </padding>
@@ -58,23 +65,30 @@
                         <columns>
                             <TableColumn fx:id="columnaId" prefWidth="50.0" text="ID" />
                             <TableColumn fx:id="columnaNombre" prefWidth="150.0" text="NOMBRE" />
-                            <TableColumn fx:id="columnaDireccion" prefWidth="200.0" text="DIRECCION" />
                         </columns>
                         <columnResizePolicy> <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /> </columnResizePolicy>
                     </TableView>
                 </VBox>
 
-                <VBox spacing="5.0" style="-fx-background-color: white;">
+                <VBox spacing="10.0" style="-fx-background-color: white;">
                     <padding> <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" /> </padding>
 
                     <Label text="TELEFONOS ASOCIADOS" styleClass="label-centrado" maxWidth="Infinity" alignment="CENTER" />
-
                     <TableView fx:id="tablaTelefonos" VBox.vgrow="ALWAYS">
                         <columns>
                             <TableColumn fx:id="columnaNumero" prefWidth="100.0" text="NUMERO" />
                         </columns>
                         <columnResizePolicy> <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /> </columnResizePolicy>
                     </TableView>
+
+                    <Label text="DIRECCIONES ASOCIADAS" styleClass="label-centrado" maxWidth="Infinity" alignment="CENTER" />
+                    <TableView fx:id="tablaDirecciones" VBox.vgrow="ALWAYS">
+                        <columns>
+                            <TableColumn fx:id="columnaDireccionDetalle" prefWidth="100.0" text="DIRECCION DETALLADA" />
+                        </columns>
+                        <columnResizePolicy> <TableView fx:constant="CONSTRAINED_RESIZE_POLICY" /> </columnResizePolicy>
+                    </TableView>
+
                 </VBox>
             </items>
         </SplitPane>

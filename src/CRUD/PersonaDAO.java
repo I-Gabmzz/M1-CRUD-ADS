@@ -16,6 +16,7 @@ public class PersonaDAO {
         Connection conexion = null;
         PreparedStatement psPersona = null; // PS para rellenar a una persona
         PreparedStatement psTelefono = null; // PS para rellenar un telefono
+        PreparedStatement psDireccion = null; // PS para rellenar una direccion
         ResultSet rsPersona = null; // Resultado de guardar una persona
         boolean resultado = false; // Resultado del metodo
 
@@ -24,12 +25,11 @@ public class PersonaDAO {
             conexion = Conexion.hacerConexion();
 
             // Se agrega una persona a la DB
-            String dbPersona = "INSERT INTO Personas (nombre, direccion) VALUES (?, ?)";
+            String dbPersona = "INSERT INTO Personas (nombre) VALUES (?)";
 
             // Con ayuda del RGK es posible saber que ID va a recibir la persona que vamos a añadir
             psPersona = conexion.prepareStatement(dbPersona, Statement.RETURN_GENERATED_KEYS);
             psPersona.setString(1, persona.getNombre());
-            psPersona.setString(2, persona.getDireccion());
 
             // Se confirma la insercion de la persona
             psPersona.executeUpdate();
@@ -43,29 +43,44 @@ public class PersonaDAO {
             }
 
             // Se asignan los telefonos de acorde a la persona recien agregada
-            if (idGenerado > 0 && !persona.getTelefonos().isEmpty()) {
-                String dbTelefono = "INSERT INTO Telefonos (personaId, telefono) VALUES (?, ?)";
-                psTelefono = conexion.prepareStatement(dbTelefono);
+            if (idGenerado > 0) {
+                if (!persona.getTelefonos().isEmpty()) {
+                    String dbTelefono = "INSERT INTO Telefonos (personaId, telefono) VALUES (?, ?)";
+                    psTelefono = conexion.prepareStatement(dbTelefono);
 
-                for (String telefono : persona.getTelefonos()) {
-                    psTelefono.setInt(1, idGenerado);
-                    psTelefono.setString(2, telefono);
-                    psTelefono.executeUpdate();
+                    for (String telefono : persona.getTelefonos()) {
+                        psTelefono.setInt(1, idGenerado);
+                        psTelefono.setString(2, telefono);
+                        psTelefono.executeUpdate();
+                    }
+                }
+
+                if (!persona.getDirecciones().isEmpty()) {
+                    String dbDireccion = "INSERT INTO Personas_Direcciones (personaId, direccionId) VALUES (?, ?)";
+                    psDireccion = conexion.prepareStatement(dbDireccion);
+
+                    for (String direccion : persona.getDirecciones()) {
+                        int idDir = obtenerIdDireccion(conexion, direccion);
+                        psDireccion.setInt(1, idGenerado);
+                        psDireccion.setInt(2, idDir);
+                        psDireccion.executeUpdate();
+                    }
                 }
             }
 
             resultado = true;
 
-        // si no se logra hacer la conexion.
+            // si no se logra hacer la conexion.
         } catch (Exception e) {
             System.out.println("Error de conexion: " + e.getMessage());
             throw new RuntimeException(e);
-        // Se cierran los recursos que toma la DB para no generar una mala optimizacion.
+            // Se cierran los recursos que toma la DB para no generar una mala optimizacion.
         } finally {
             try {
                 if (rsPersona != null) rsPersona.close();
                 if (psPersona != null) psPersona.close();
                 if (psTelefono != null) psTelefono.close();
+                if (psDireccion != null) psDireccion.close();
                 if (conexion != null) conexion.close();
             } catch (Exception e) {
             }
@@ -80,8 +95,10 @@ public class PersonaDAO {
         Connection conexion = null;
         PreparedStatement psPersona = null;
         PreparedStatement psTelefono = null;
+        PreparedStatement psDireccion = null;
         ResultSet rsPersona = null;
         ResultSet rsTelefono = null;
+        ResultSet rsDireccion = null;
         Persona personaEncontrada = null; // Aqui se guarda el resultado final
 
         try {
@@ -100,11 +117,10 @@ public class PersonaDAO {
                 // Se recuperan los datos de las columnas de la DB
                 int idDb = rsPersona.getInt("id");
                 String nombreDb = rsPersona.getString("nombre");
-                String direccionDb = rsPersona.getString("direccion");
 
                 // Se construye a la persona con los datos recuperados
                 // En este punto se crea exactamente la persona que se consulto pero faltan sus telefonos asignados
-                personaEncontrada = new Persona(idDb, nombreDb, direccionDb);
+                personaEncontrada = new Persona(idDb, nombreDb);
             }
 
             // Proceso para encontrar los telefonos asignados a la persona creada
@@ -121,6 +137,17 @@ public class PersonaDAO {
                     // Se agrega el numero a la lista de la persona encontrada
                     personaEncontrada.agregarTelefono(numero);
                 }
+
+                String dbDir = "SELECT d.texto_direccion FROM Direcciones d JOIN Personas_Direcciones pd ON d.id = pd.direccionId WHERE pd.personaId = ?";
+                psDireccion = conexion.prepareStatement(dbDir);
+                psDireccion.setInt(1, id);
+
+                rsDireccion = psDireccion.executeQuery();
+
+                while (rsDireccion.next()) {
+                    String dirTexto = rsDireccion.getString("texto_direccion");
+                    personaEncontrada.agregarDireccion(dirTexto);
+                }
             }
 
         } catch (Exception e) {
@@ -131,8 +158,10 @@ public class PersonaDAO {
             try {
                 if (rsPersona != null) rsPersona.close();
                 if (rsTelefono != null) rsTelefono.close();
+                if (rsDireccion != null) rsDireccion.close();
                 if (psPersona != null) psPersona.close();
                 if (psTelefono != null) psTelefono.close();
+                if (psDireccion != null) psDireccion.close();
                 if (conexion != null) conexion.close();
             } catch (Exception e) {}
         }
@@ -146,17 +175,18 @@ public class PersonaDAO {
         PreparedStatement psActualizar = null;
         PreparedStatement psBorrarTel = null;
         PreparedStatement psInsertarTel = null;
+        PreparedStatement psBorrarDir = null;
+        PreparedStatement psInsertarDir = null;
         boolean resultado = false;
 
         try {
             conexion = Conexion.hacerConexion();
 
             // Primero se actualizan los datos clave tanto nombre como direccion
-            String dbActualizar = "UPDATE Personas SET nombre = ?, direccion = ? WHERE id = ?";
+            String dbActualizar = "UPDATE Personas SET nombre = ? WHERE id = ?";
             psActualizar = conexion.prepareStatement(dbActualizar);
             psActualizar.setString(1, persona.getNombre());
-            psActualizar.setString(2, persona.getDireccion());
-            psActualizar.setInt(3, persona.getId());
+            psActualizar.setInt(2, persona.getId());
 
             // Posteriormente se ejecuta la actualizacion, en este caso si se devuelve un 0, significa que el ID no existe.
             int filasAfectadas = psActualizar.executeUpdate();
@@ -181,6 +211,24 @@ public class PersonaDAO {
                         psInsertarTel.executeUpdate();
                     }
                 }
+
+                String dbBorrarDir = "DELETE FROM Personas_Direcciones WHERE personaId = ?";
+                psBorrarDir = conexion.prepareStatement(dbBorrarDir);
+                psBorrarDir.setInt(1, persona.getId());
+                psBorrarDir.executeUpdate();
+
+                if (!persona.getDirecciones().isEmpty()) {
+                    String dbInsertarDir = "INSERT INTO Personas_Direcciones (personaId, direccionId) VALUES (?, ?)";
+                    psInsertarDir = conexion.prepareStatement(dbInsertarDir);
+
+                    for (String direccion : persona.getDirecciones()) {
+                        int idDir = obtenerIdDireccion(conexion, direccion);
+                        psInsertarDir.setInt(1, persona.getId());
+                        psInsertarDir.setInt(2, idDir);
+                        psInsertarDir.executeUpdate();
+                    }
+                }
+
                 resultado = true;
             }
 
@@ -193,6 +241,8 @@ public class PersonaDAO {
                 if (psActualizar != null) psActualizar.close();
                 if (psBorrarTel != null) psBorrarTel.close();
                 if (psInsertarTel != null) psInsertarTel.close();
+                if (psBorrarDir != null) psBorrarDir.close();
+                if (psInsertarDir != null) psInsertarDir.close();
                 if (conexion != null) conexion.close();
             } catch (Exception e) {}
         }
@@ -234,6 +284,34 @@ public class PersonaDAO {
             } catch (Exception e) {}
         }
         return resultado;
+    }
+
+    // Metodo auxiliar para manejar la logica de direcciones compartidas
+    // Devuelve el ID de la direccion (ya sea nueva o existente)
+    private int obtenerIdDireccion(Connection conn, String textoDireccion) throws SQLException {
+        int idDireccion = -1;
+
+        // Lo primero que se realiza es buscar si ya existe esa direccion
+        String sqlBuscar = "SELECT id FROM Direcciones WHERE texto_direccion = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sqlBuscar)) {
+            ps.setString(1, textoDireccion);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("id");
+            }
+        }
+
+        // En caso de que la direccion no exista, esta se va a crear
+        String sqlInsertar = "INSERT INTO Direcciones (texto_direccion) VALUES (?)";
+        try (PreparedStatement ps = conn.prepareStatement(sqlInsertar, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, textoDireccion);
+            ps.executeUpdate();
+            ResultSet rs = ps.getGeneratedKeys();
+            if (rs.next()) {
+                idDireccion = rs.getInt(1);
+            }
+        }
+        return idDireccion;
     }
 
 }

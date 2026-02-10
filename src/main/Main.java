@@ -17,7 +17,7 @@ public class Main extends Application {
         // Se carga el archivo que contiene la interfaz y se configura la respectiva ventana
         FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("/Interfaz/Interfaz.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 1000, 600);
-        stage.setTitle("Meta 1.1 | ADS - Sistema CRUD de una Agenda");
+        stage.setTitle("Meta 1.2 | AyDS - Sistema CRUD de una Agenda");
         stage.setScene(scene);
         stage.show();
     }

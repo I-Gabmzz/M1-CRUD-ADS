@@ -54,8 +54,7 @@ public class Conexion {
                 // Se crea un objeto Persona con los datos de la fila actual
                 Persona persona = new Persona(
                         resultado.getInt("id"),
-                        resultado.getString("nombre"),
-                        resultado.getString("direccion")
+                        resultado.getString("nombre")
                 );
                 // Se agrega la persona a la lista final
                 lista.add(persona);
