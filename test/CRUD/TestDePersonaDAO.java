@@ -11,7 +11,8 @@ public class TestDePersonaDAO {
     public void testInsertar() {
         // Primera prueba: Se crea la respectiva persona falsa
         PersonaDAO pruebaDePersona = new PersonaDAO();
-        Persona personaFake = new Persona("Guillermo Del Toro", "Calle UABC");
+        Persona personaFake = new Persona("Guillermo Del Toro");
+        personaFake.agregarDireccion("Calle UABC");
         personaFake.agregarTelefono("123-456-7890");
 
         // Segunda prueba: Se intenta guardar la personaFake
@@ -32,7 +33,8 @@ public class TestDePersonaDAO {
     public void testLeer() {
         // Primera prueba: Se inserta a alguien para asegurar que exista algo que buscar
         PersonaDAO testDAO = new PersonaDAO();
-        Persona personaOriginal = new Persona("Read Test", "Calle wikipedia");
+        Persona personaOriginal = new Persona("Read Test");
+        personaOriginal.agregarDireccion("Calle wikipedia");
         personaOriginal.agregarTelefono("123-456-7890");
 
         testDAO.insertarPersona(personaOriginal);
@@ -48,7 +50,7 @@ public class TestDePersonaDAO {
 
         // Cuarta Prueba: Se comprueba que los datos sean los mismos que se guardaron
         assertEquals("Read Test", personaRecuperada.getNombre(), "Error: El nombre no coincide");
-        assertEquals("Calle wikipedia", personaRecuperada.getDireccion(), "Error: La direccion no coincide");
+        assertEquals("Calle wikipedia", personaRecuperada.getDirecciones().get(0), "Error: La direccion no coincide");
         assertFalse(personaRecuperada.getTelefonos().isEmpty(), "Error: No se recuperaron los telefonos");
 
         System.out.println("Prueba de lectura exitosa, ya se encontro a: " + personaRecuperada.getNombre());
@@ -58,7 +60,8 @@ public class TestDePersonaDAO {
     public void testActualizar() {
         // Nuevamente en este test tambien se crea y se inserta una persona inicial
         PersonaDAO testDAO = new PersonaDAO();
-        Persona personaParaEditar = new Persona("Marina Del Pilar", "Palacio Municipal");
+        Persona personaParaEditar = new Persona("Marina Del Pilar");
+        personaParaEditar.agregarDireccion("Palacio Municipal");
         personaParaEditar.agregarTelefono("123-456-7890"); // Telefono a actualizar
 
         testDAO.insertarPersona(personaParaEditar);
@@ -68,7 +71,8 @@ public class TestDePersonaDAO {
 
         // Ahora en este apartado se cambian los datos de la persona
         personaParaEditar.setNombre("Gobernadora");
-        personaParaEditar.setDireccion("Baja California");
+        personaParaEditar.getDirecciones().clear();
+        personaParaEditar.agregarDireccion("Baja California");
 
         // Se limpia la lista de telefonos asociados que es vieja y se pone una nueva
         personaParaEditar.getTelefonos().clear();
@@ -83,7 +87,7 @@ public class TestDePersonaDAO {
         // Se lee para ver si se efectuaron los cambios y se comprueba cada uno de los cambios.
         Persona personaEnBD = testDAO.leerPersonaID(idObjetivo);
         assertEquals("Gobernadora", personaEnBD.getNombre(), "Error: El nombre no se actualizo en BD");
-        assertEquals("Baja California", personaEnBD.getDireccion(), "Error: La direccion no se actualizo");
+        assertEquals("Baja California", personaEnBD.getDirecciones().get(0), "Error: La direccion no se actualizo");
         // Se verifica que el telefono viejo ya no este y este el nuevo
         assertEquals("098-765-4321", personaEnBD.getTelefonos().get(0), "Error: Los telefonos no se actualizaron correctamente");
 
@@ -94,7 +98,8 @@ public class TestDePersonaDAO {
     public void testEliminar() {
         // Ahora para finalizar las pruebas de unidad nuevamente se crea una persona temporal
         PersonaDAO testDAO = new PersonaDAO();
-        Persona personaParaBorrar = new Persona("EliminarTest", "Calle borrada");
+        Persona personaParaBorrar = new Persona("EliminarTest");
+        personaParaBorrar.agregarDireccion("Calle borrada");
         testDAO.insertarPersona(personaParaBorrar);
         int idObjetivo = personaParaBorrar.getId();
 
@@ -117,7 +122,8 @@ public class TestDePersonaDAO {
 
         // Primero se crea la persona y el respectivo usuario
         PersonaDAO pDao = new PersonaDAO();
-        Persona usuario = new Persona("John Cena", "Calle WWE");
+        Persona usuario = new Persona("John Cena");
+        usuario.agregarDireccion("Calle WWE");
 
         // Posteriormente se inserta al usuario
         pDao.insertarPersona(usuario);
@@ -151,6 +157,43 @@ public class TestDePersonaDAO {
         assertTrue(eliminado, "Fallo en la integracion");
         assertNull(pDao.leerPersonaID(idGenerado), "Fallo en la integracion");
         System.out.println("El ciclo y la integracion ha finalizado correctamente");
+    }
+
+    @Test
+    public void testDireccionesCompartidas() {
+        PersonaDAO dao = new PersonaDAO();
+        // Para comprobar que las direcciones si se comparten correctamente se crean dos personas
+        Persona p1 = new Persona("Naruto");
+        Persona p2 = new Persona("Goku");
+
+        // Se les asigna la misma direccion a las dos personas
+        String direccionComun = "Japon";
+        p1.agregarDireccion(direccionComun);
+        p2.agregarDireccion(direccionComun);
+
+        // Se insertan las respectivas personas a la db
+        dao.insertarPersona(p1);
+        dao.insertarPersona(p2);
+
+        // Ahora se cuenta cuantas veces existe la direccion en la tabla Direcciones
+        int totalDireccionesReales = 0;
+        try {
+            java.sql.Connection conn = ConexionDB.Conexion.hacerConexion();
+            java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Direcciones WHERE texto_direccion = ?");
+            ps.setString(1, direccionComun);
+            java.sql.ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                totalDireccionesReales = rs.getInt(1);
+            }
+            conn.close();
+        } catch (Exception e) { e.printStackTrace(); }
+
+        // Debería ser 1 solo registro de direccion el cual esta compartido por 2 personas
+        assertEquals(1, totalDireccionesReales, "Error: Se duplicó la dirección en lugar de compartirse.");
+
+        System.out.println("Éxito: La dirección se guardó una sola vez y se compartió.");
+        dao.eliminarPersona(p1.getId());
+        dao.eliminarPersona(p2.getId());
     }
 
 }
