@@ -3,12 +3,17 @@ package CRUD;
 // Se importan las librerias necesarias
 import java.sql.*;
 
-import ConexionDB.Conexion;
+import ConexionDB.InterfazConexion;
 import Elementos.Persona;
 
 // Se declara la creacion de la clase Persona Data Access Object
 // Se implementa la interfaz
 public class PersonaDAO implements InterfazPersonaDAO {
+    private InterfazConexion gestorConexion;
+
+    public PersonaDAO(InterfazConexion gestorConexion) {
+        this.gestorConexion = gestorConexion;
+    }
 
     // C (CREATE)
     // Metodo el cual busca instertar una persona a la DB
@@ -24,7 +29,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
 
         try {
             // Busca realizar la conexion con la DB
-            conexion = Conexion.hacerConexion();
+            conexion = gestorConexion.hacerConexion();
 
             // Se agrega una persona a la DB
             String dbPersona = "INSERT INTO Personas (nombre) VALUES (?)";
@@ -78,14 +83,9 @@ public class PersonaDAO implements InterfazPersonaDAO {
             throw new RuntimeException(e);
             // Se cierran los recursos que toma la DB para no generar una mala optimizacion.
         } finally {
-            try {
-                if (rsPersona != null) rsPersona.close();
-                if (psPersona != null) psPersona.close();
-                if (psTelefono != null) psTelefono.close();
-                if (psDireccion != null) psDireccion.close();
-                if (conexion != null) conexion.close();
-            } catch (Exception e) {
-            }
+            // Cerrar usando el gestor
+            gestorConexion.cerrarConexion(conexion);
+            try { if (psPersona != null) psPersona.close(); } catch (Exception e) {}
         }
         return resultado;
     }
@@ -106,7 +106,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
 
         try {
             // Busca realizar la conexion con la DB
-            conexion = Conexion.hacerConexion();
+            conexion = gestorConexion.hacerConexion();
 
             // En este apartado se buscan los datos principales en la tabla Personas
             String dbBuscar = "SELECT * FROM Personas WHERE id = ?";
@@ -156,18 +156,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
         } catch (Exception e) {
             System.out.println("Error al leer persona: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            // Nuevamente se cierran los recursos para liberar memoria
-            try {
-                if (rsPersona != null) rsPersona.close();
-                if (rsTelefono != null) rsTelefono.close();
-                if (rsDireccion != null) rsDireccion.close();
-                if (psPersona != null) psPersona.close();
-                if (psTelefono != null) psTelefono.close();
-                if (psDireccion != null) psDireccion.close();
-                if (conexion != null) conexion.close();
-            } catch (Exception e) {}
-        }
+        } finally { gestorConexion.cerrarConexion(conexion); }
         return personaEncontrada;
     }
 
@@ -184,7 +173,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
         boolean resultado = false;
 
         try {
-            conexion = Conexion.hacerConexion();
+            conexion = gestorConexion.hacerConexion();
 
             // Primero se actualizan los datos clave tanto nombre como direccion
             String dbActualizar = "UPDATE Personas SET nombre = ? WHERE id = ?";
@@ -239,17 +228,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
         } catch (Exception e) {
             System.out.println("Error al actualizar persona: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            // Como se ha hecho anteriormente despues de cada proceso, se liberan los recursos utilizados
-            try {
-                if (psActualizar != null) psActualizar.close();
-                if (psBorrarTel != null) psBorrarTel.close();
-                if (psInsertarTel != null) psInsertarTel.close();
-                if (psBorrarDir != null) psBorrarDir.close();
-                if (psInsertarDir != null) psInsertarDir.close();
-                if (conexion != null) conexion.close();
-            } catch (Exception e) {}
-        }
+        } finally { gestorConexion.cerrarConexion(conexion); }
         return resultado;
     }
 
@@ -262,7 +241,7 @@ public class PersonaDAO implements InterfazPersonaDAO {
         boolean resultado = false;
 
         try {
-            conexion = Conexion.hacerConexion();
+            conexion = gestorConexion.hacerConexion();
 
             // Se prepara la accion de la DB para borrar pero aqui sucede algo particular
             // al borrar la persona, sus telefonos se eliminan automaticamente.
@@ -281,15 +260,10 @@ public class PersonaDAO implements InterfazPersonaDAO {
         } catch (Exception e) {
             System.out.println("Error al eliminar persona: " + e.getMessage());
             e.printStackTrace();
-        } finally {
-            // Se cierran los recursos
-            try {
-                if (psEliminar != null) psEliminar.close();
-                if (conexion != null) conexion.close();
-            } catch (Exception e) {}
-        }
+        } finally { gestorConexion.cerrarConexion(conexion); }
         return resultado;
     }
+
 
     // Metodo auxiliar para manejar la logica de direcciones compartidas
     // Devuelve el ID de la direccion (ya sea nueva o existente)

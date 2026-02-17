@@ -1,5 +1,6 @@
 package CRUD;
 
+import ConexionDB.Conexion;
 import Elementos.Persona;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -178,7 +179,7 @@ public class TestDePersonaDAO {
         // Ahora se cuenta cuantas veces existe la direccion en la tabla Direcciones
         int totalDireccionesReales = 0;
         try {
-            java.sql.Connection conn = ConexionDB.Conexion.hacerConexion();
+            java.sql.Connection conn = new Conexion().hacerConexion();
             java.sql.PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Direcciones WHERE texto_direccion = ?");
             ps.setString(1, direccionComun);
             java.sql.ResultSet rs = ps.executeQuery();

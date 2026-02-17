@@ -6,15 +6,16 @@ import Elementos.Persona;
 import java.sql.*;
 import java.util.*;
 
-public class Conexion {
+public class Conexion implements InterfazConexion {
 
     // Datos de la conexión a la base de datos
     private static final String URL = "jdbc:mariadb://localhost:3306/agenda";
     private static final String USER = "usuario1";
     private static final String PASSWORD = "superpassword";
 
+    @Override
     // Metodo por el cual se logra la conexion.
-    public static Connection hacerConexion() {
+    public Connection hacerConexion() {
         Connection conexion = null;
         try {
             // Se registra el driver para que se asegure la libreria.
@@ -32,6 +33,17 @@ public class Conexion {
         return conexion;
     }
 
+    @Override
+    public void cerrarConexion(Connection conexion) {
+        try {
+            if (conexion != null && !conexion.isClosed()) {
+                conexion.close();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     // Metodo que recupera todos los registros de personas al iniciar la aplicacion
     public static List<Persona> cargarBaseDeDatos() {
         // Lista donde se guardaran las personas recuperadas
@@ -42,7 +54,7 @@ public class Conexion {
 
         try {
             // Se inicia la conexion
-            conexion = hacerConexion();
+            conexion = new Conexion().hacerConexion();
 
             // Solicitud de la DB para seleccionar todas las filas de la tabla Personas
             String solicitudDB = "SELECT * FROM Personas";

@@ -11,7 +11,7 @@ public class TestDeConexion {
     @Test
     public void testParaConexionExitosa() {
         // Intentamos obtener la conexión usando la clase de conexion y su respectivo metodo
-        Connection conexion = Conexion.hacerConexion();
+        Connection conexion = new Conexion().hacerConexion();
 
         // Se plantea el primer escenario, en donde si falla la conexion esta devolvera null, pero no debe de ser asi.
         assertNotNull(conexion, "La conexión falló y devolvió null");

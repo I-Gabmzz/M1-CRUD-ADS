@@ -2,6 +2,8 @@ package Elementos;
 
 import CRUD.InterfazPersonaDAO;
 import CRUD.PersonaDAO;
+import ConexionDB.Conexion;
+import ConexionDB.InterfazConexion;
 import Elementos.Persona;
 import java.util.List;
 
@@ -12,8 +14,11 @@ public class LogicaDePersona {
     private InterfazPersonaDAO personaDAO;
 
     public LogicaDePersona() {
+        // Se implementa la conexion y se aplica en el DAO
+        InterfazConexion conexion = new Conexion();
+
         // Se aplica la implementación del DAO
-        this.personaDAO = new PersonaDAO();
+        this.personaDAO = new PersonaDAO(conexion);
     }
 
     // Metodo para registrar una persona con la implementacion de validaciones lógicas
