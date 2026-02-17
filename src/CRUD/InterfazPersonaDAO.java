@@ -12,21 +12,9 @@ import java.util.List;
 
 // Se declara la interfaz del DAO para Persona
 // Define únicamente las operaciones básicas del CRUD, evitando depender de una clase concreta
-public interface InterfazPersonaDAO {
-
-    // C (CREATE)
-    // Metodo el cual busca insertar una persona
-    boolean insertarPersona(Persona persona);
-
-    // R (READ)
-    // Metodo el cual busca leer una persona por su ID
-    Persona leerPersonaID(int id);
-
-    // U (UPDATE)
-    // Metodo el cual busca actualizar una persona
-    boolean actualizarPersona(Persona persona);
-
-    // D (DELETE)
-    // Metodo el cual busca eliminar una persona por su ID
-    boolean eliminarPersona(int id);;
+public interface InterfazPersonaDAO extends InterfazLecturaDeDatos, InterfazEscrituraDeDatos {
+    // Esta interfaz ahora agrupa dos interfaces.
+    // Esto permite que si alguien solo quiere leer, use InterfazLecturaDeDatos directamente
+    // Sin depender de InterfazEscrituraDeDatos.
+    // Y tambien ya no necesita definir los métodos aquí porque los hereda.
 }
