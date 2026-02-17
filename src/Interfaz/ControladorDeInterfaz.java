@@ -3,6 +3,7 @@ package Interfaz;
 import ConexionDB.Conexion;
 import CRUD.PersonaDAO;
 import CRUD.InterfazPersonaDAO;
+import Elementos.LogicaDePersona;
 import Elementos.Persona;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -33,7 +34,7 @@ public class ControladorDeInterfaz implements Initializable {
     @FXML private TableView<String> tablaDirecciones;
     @FXML private TableColumn<String, String> columnaDireccionDetalle;
 
-    private InterfazPersonaDAO gestorDatos;
+    private LogicaDePersona logicaDePersona;
     private ObservableList<Persona> listaPersonasInterfaz;
     private ObservableList<String> listaTelefonosInterfaz;
     private ObservableList<String> listaDireccionesInterfaz;
@@ -42,7 +43,7 @@ public class ControladorDeInterfaz implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Se inicializan el gestor de datos y las listas vacias
-        gestorDatos = new PersonaDAO();
+        logicaDePersona = new LogicaDePersona(); // Para aplicar el principio SRP se conecta con el DAO
         listaPersonasInterfaz = FXCollections.observableArrayList();
         listaTelefonosInterfaz = FXCollections.observableArrayList();
         listaDireccionesInterfaz = FXCollections.observableArrayList();
@@ -83,20 +84,22 @@ public class ControladorDeInterfaz implements Initializable {
     private void cargarDatosDetalladosDe(Persona persona) {
         listaTelefonosInterfaz.clear();
         listaDireccionesInterfaz.clear();
-        // Se consulta a la base de datos para asegurar que tenemos los respectivos datos
-        Persona personaCompleta = gestorDatos.leerPersonaID(persona.getId());
+        try {
+            // Ahora se usa buscarPersona de la lógica
+            Persona personaCompleta = logicaDePersona.buscarPersona(persona.getId());
 
-        if (personaCompleta != null) {
-            // Se actualiza la lista y el objeto
-            if (personaCompleta.getTelefonos() != null) {
-                listaTelefonosInterfaz.addAll(personaCompleta.getTelefonos());
-                persona.setTelefonos(personaCompleta.getTelefonos());
+            if (personaCompleta != null) {
+                if (personaCompleta.getTelefonos() != null) {
+                    listaTelefonosInterfaz.addAll(personaCompleta.getTelefonos());
+                    persona.setTelefonos(personaCompleta.getTelefonos());
+                }
+                if (personaCompleta.getDirecciones() != null) {
+                    listaDireccionesInterfaz.addAll(personaCompleta.getDirecciones());
+                    persona.setDirecciones(personaCompleta.getDirecciones());
+                }
             }
-            // Cargar direcciones
-            if (personaCompleta.getDirecciones() != null) {
-                listaDireccionesInterfaz.addAll(personaCompleta.getDirecciones());
-                persona.setDirecciones(personaCompleta.getDirecciones());
-            }
+        } catch (Exception e) {
+            System.out.println("No se pudieron cargar detalles: " + e.getMessage());
         }
     }
 
@@ -111,14 +114,16 @@ public class ControladorDeInterfaz implements Initializable {
 
         Optional<String> resultado = dialogo.showAndWait();
         resultado.ifPresent(nombre -> {
-            if (!nombre.isEmpty()) {
-                // Creamos persona sin direcciones iniciales (se agregan con el otro boton)
-                Persona nuevaPersona = new Persona(nombre);
+            try {
+                // Se aplica el principio de SRP
+                logicaDePersona.registrarPersona(nombre);
 
-                if (gestorDatos.insertarPersona(nuevaPersona)) {
-                    listaPersonasInterfaz.add(nuevaPersona);
-                    tablaPersonas.getSelectionModel().select(nuevaPersona);
-                }
+                // Si la línea de arriba no falla, se actualiza la tabla
+                mostrarMensaje("Éxito", "Persona guardada correctamente.");
+                actualizarTabla();
+
+            } catch (Exception e) {
+                mostrarMensaje("Error de Validación", e.getMessage());
             }
         });
     }
@@ -138,10 +143,16 @@ public class ControladorDeInterfaz implements Initializable {
 
         Optional<String> resultado = dialogo.showAndWait();
         resultado.ifPresent(nuevoNombre -> {
-            personaSeleccionada.setNombre(nuevoNombre);
-            // Se envian los cambios a la base de datos
-            if (gestorDatos.actualizarPersona(personaSeleccionada)) {
-                tablaPersonas.refresh(); // Se refresca la tabla de la interfaz
+            try {
+                // Ahora se usa la logica y atrapamos errores
+                logicaDePersona.modificarNombrePersona(personaSeleccionada, nuevoNombre);
+
+                // Si no fallo, refrescamos la tabla visualmente
+                tablaPersonas.refresh();
+                mostrarMensaje("Éxito", "Nombre actualizado correctamente.");
+
+            } catch (Exception e) {
+                mostrarMensaje("Error al modificar", e.getMessage());
             }
         });
     }
@@ -159,30 +170,29 @@ public class ControladorDeInterfaz implements Initializable {
         resultado.ifPresent(textoId -> {
             try {
                 int id = Integer.parseInt(textoId);
-                // Se busca en la base de datos
-                Persona encontrada = gestorDatos.leerPersonaID(id);
 
-                if (encontrada != null) {
-                    // Esta logica es para seleccionar la persona en la tabla una vez encontrada
-                    boolean estabaEnLista = false;
-                    for (Persona p : listaPersonasInterfaz) {
-                        if (p.getId() == id) {
-                            tablaPersonas.getSelectionModel().select(p);
-                            tablaPersonas.scrollTo(p);
-                            estabaEnLista = true;
-                            break;
-                        }
+                // La logica busca o lanza excepción si no encuentra
+                Persona encontrada = logicaDePersona.buscarPersona(id);
+
+                // Seleccionar en tabla (Lógica visual)
+                boolean estabaEnLista = false;
+                for (Persona p : listaPersonasInterfaz) {
+                    if (p.getId() == id) {
+                        tablaPersonas.getSelectionModel().select(p);
+                        tablaPersonas.scrollTo(p);
+                        estabaEnLista = true;
+                        break;
                     }
-                    // Si no estaba en la lista, se agrega
-                    if (!estabaEnLista) {
-                        listaPersonasInterfaz.add(encontrada);
-                        tablaPersonas.getSelectionModel().select(encontrada);
-                    }
-                } else {
-                    mostrarMensaje("No encontrado", "ID no existe");
                 }
+                if (!estabaEnLista) {
+                    listaPersonasInterfaz.add(encontrada);
+                    tablaPersonas.getSelectionModel().select(encontrada);
+                }
+
+            } catch (NumberFormatException e) {
+                mostrarMensaje("Error", "El ID debe ser un número.");
             } catch (Exception e) {
-                mostrarMensaje("Error", "ID invalido");
+                mostrarMensaje("No encontrado", e.getMessage());
             }
         });
     }
@@ -200,15 +210,21 @@ public class ControladorDeInterfaz implements Initializable {
         alerta.setContentText("Se borraran tambien sus telefonos y direcciones.");
 
         if (alerta.showAndWait().get() == ButtonType.OK) {
-            // Se elimina de la base de datos y de las listas de la interfaz
-            if (gestorDatos.eliminarPersona(persona.getId())) {
+            try {
+                // se delega la logica
+                logicaDePersona.eliminarPersona(persona.getId());
+
+                // se actualiza la UI
                 listaPersonasInterfaz.remove(persona);
                 listaTelefonosInterfaz.clear();
                 listaDireccionesInterfaz.clear();
+                mostrarMensaje("Éxito", "Persona eliminada.");
+
+            } catch (Exception e) {
+                mostrarMensaje("Error al eliminar", e.getMessage());
             }
         }
     }
-
     // Accion para agregar un telefono a la persona seleccionada
     @FXML
     void accionBotonAñadirTelefono(ActionEvent event) {
@@ -222,13 +238,15 @@ public class ControladorDeInterfaz implements Initializable {
 
         Optional<String> resultado = dialogo.showAndWait();
         resultado.ifPresent(numero -> {
-            if (!numero.isEmpty()) {
-                // Se agrega el numero a la lista del objeto
-                persona.agregarTelefono(numero);
-                // Se usa actualizarPersona para guardar los cambios en la BD
-                if (gestorDatos.actualizarPersona(persona)) {
-                    cargarDatosDetalladosDe(persona);
-                }
+            try {
+                // Ahora la logica valida (longitud, etc) y guarda
+                logicaDePersona.agregarTelefono(persona, numero);
+
+                // Recargamos detalles visuales
+                cargarDatosDetalladosDe(persona);
+
+            } catch (Exception e) {
+                mostrarMensaje("Error de validación", e.getMessage());
             }
         });
     }
@@ -244,11 +262,13 @@ public class ControladorDeInterfaz implements Initializable {
             return;
         }
 
-        // Se elimina el numero de la lista que esta en memoria
-        persona.getTelefonos().remove(numero);
-        // Se actualiza la base de datos con la nueva lista
-        if (gestorDatos.actualizarPersona(persona)) {
+        try {
+            // Se elimina el telefono
+            logicaDePersona.eliminarTelefono(persona, numero);
             cargarDatosDetalladosDe(persona);
+
+        } catch (Exception e) {
+            mostrarMensaje("Error", e.getMessage());
         }
     }
 
@@ -265,12 +285,13 @@ public class ControladorDeInterfaz implements Initializable {
 
         Optional<String> resultado = dialogo.showAndWait();
         resultado.ifPresent(direccion -> {
-            if (!direccion.isEmpty()) {
-                persona.agregarDireccion(direccion);
-                // El DAO verifica si existe y vincula
-                if (gestorDatos.actualizarPersona(persona)) {
-                    cargarDatosDetalladosDe(persona);
-                }
+            try {
+                // Validacion y guardado por logica
+                logicaDePersona.agregarDireccion(persona, direccion);
+                cargarDatosDetalladosDe(persona);
+
+            } catch (Exception e) {
+                mostrarMensaje("Error de validación", e.getMessage());
             }
         });
     }
@@ -283,11 +304,12 @@ public class ControladorDeInterfaz implements Initializable {
 
         if (persona == null || direccion == null) { mostrarMensaje("Error", "Selecciona una direccion"); return; }
 
-        // Removemos la direccion de la lista de la persona
-        persona.getDirecciones().remove(direccion);
-        // Al actualizar, el DAO eliminara el vinculo en la tabla intermedia
-        if (gestorDatos.actualizarPersona(persona)) {
+        try {
+            // Se elimina la direccion usando la logica de persona
+            logicaDePersona.eliminarDireccion(persona, direccion);
             cargarDatosDetalladosDe(persona);
+        } catch (Exception e) {
+            mostrarMensaje("Error", e.getMessage());
         }
     }
 
@@ -299,4 +321,12 @@ public class ControladorDeInterfaz implements Initializable {
         alerta.setContentText(mensaje);
         alerta.showAndWait();
     }
+
+    // Metodo auxiliar para refrescar las tablas
+    private void actualizarTabla() {
+        listaPersonasInterfaz.clear();
+        listaPersonasInterfaz.addAll(ConexionDB.Conexion.cargarBaseDeDatos());
+    }
+
+
 }
