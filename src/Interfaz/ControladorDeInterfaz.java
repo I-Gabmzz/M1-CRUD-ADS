@@ -2,6 +2,7 @@ package Interfaz;
 
 import ConexionDB.Conexion;
 import CRUD.PersonaDAO;
+import CRUD.InterfazPersonaDAO;
 import Elementos.Persona;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -32,7 +33,7 @@ public class ControladorDeInterfaz implements Initializable {
     @FXML private TableView<String> tablaDirecciones;
     @FXML private TableColumn<String, String> columnaDireccionDetalle;
 
-    private PersonaDAO gestorDatos;
+    private InterfazPersonaDAO gestorDatos;
     private ObservableList<Persona> listaPersonasInterfaz;
     private ObservableList<String> listaTelefonosInterfaz;
     private ObservableList<String> listaDireccionesInterfaz;
