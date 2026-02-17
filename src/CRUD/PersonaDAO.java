@@ -7,10 +7,12 @@ import ConexionDB.Conexion;
 import Elementos.Persona;
 
 // Se declara la creacion de la clase Persona Data Access Object
-public class PersonaDAO {
+// Se implementa la interfaz
+public class PersonaDAO implements InterfazPersonaDAO {
 
     // C (CREATE)
     // Metodo el cual busca instertar una persona a la DB
+    @Override
     public boolean insertarPersona(Persona persona) {
         // Se declaran las variables necesarias para este metodo
         Connection conexion = null;
@@ -90,6 +92,7 @@ public class PersonaDAO {
 
     // R (READ)
     // Metodo para buscar una persona por su ID y recuperar sus telefonos
+    @Override
     public Persona leerPersonaID(int id) {
         // Se declaran las variables necesarias
         Connection conexion = null;
@@ -170,6 +173,7 @@ public class PersonaDAO {
 
     // U (UPDATE)
     // Metodo para actualizar los datos de una persona y su lista de telefonos
+    @Override
     public boolean actualizarPersona(Persona persona) {
         Connection conexion = null;
         PreparedStatement psActualizar = null;
@@ -251,6 +255,7 @@ public class PersonaDAO {
 
     // D (DELETE)
     // Metodo para eliminar una persona de la base de datos utilizando mediante su ID
+    @Override
     public boolean eliminarPersona(int id) {
         Connection conexion = null;
         PreparedStatement psEliminar = null;
@@ -288,6 +293,7 @@ public class PersonaDAO {
 
     // Metodo auxiliar para manejar la logica de direcciones compartidas
     // Devuelve el ID de la direccion (ya sea nueva o existente)
+    // Este metodo no lleva @Override porque no es parte de la interfaz pública
     private int obtenerIdDireccion(Connection conn, String textoDireccion) throws SQLException {
         int idDireccion = -1;
 
