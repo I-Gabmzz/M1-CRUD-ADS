@@ -1,43 +1,49 @@
-# CRUD-ADS (Meta 1.2)
+# CRUD-ADS (Meta 1.3) 
 
-Sistema de gestión de contactos desarrollado en **Java** utilizando **JavaFX** para la interfaz gráfica y **MariaDB** como base de datos.
+Sistema de gestión de contactos desarrollado en **Java** y **JavaFX**, hecho bajo una arquitectura de software para cumplir con los principios de **Alta Cohesión** y **Bajo Acoplamiento**.
 
-Esta versión implementa un **CRUD completo (Altas, Bajas, Cambios y Consultas)** con manejo avanzado de bases de datos relacionales:
-* **Uno a Muchos (1:N):** Una persona puede tener múltiples teléfonos asociados.
-* **Muchos a Muchos (N:M):** Una persona puede tener múltiples direcciones y **varias personas pueden compartir la misma dirección**.
+Esta versión mantiene la funcionalidad del CRUD completo (Personas, Teléfonos y Direcciones) de la Meta 1.2, pero reestructura completamente el código interno aplicando los **5 Principios SOLID**.
+
+---
+### 💎 Principios SOLID Aplicados
+
+-   **S (SRP):** Cada clase tiene una única responsabilidad (Vista, Lógica o Datos).
+-   **O (OCP):** Implementación de la interfaz `InterfazConexion`, permitiendo cambiar el motor de base de datos sin modificar el código existente.
+-   **L (LSP):** La implementación `PersonaDAO` respeta fielmente el contrato de `InterfazPersonaDAO`, garantizando la estabilidad del sistema.
+-   **I (ISP):** Segregación de interfaces en `InterfazLecturaDeDatos` y `InterfazEscrituraDeDatos` para no forzar dependencias innecesarias.
+-   **D (DIP):** Inyección de dependencias en el Controlador y la Lógica, eliminando el acoplamiento directo a clases concretas.
 
 ---
 
 ## ✨ Funcionalidades
 
-- **Gestión de Personas**: Alta, búsqueda por ID, modificación de nombre y eliminación en cascada.
-- **Gestión de Teléfonos**: Agregar y eliminar múltiples números por contacto.
-- **Gestión de Direcciones (Nuevo en Meta 1.2)**:
-  - Vincular múltiples direcciones a una persona.
-  - **Direcciones Compartidas**: El sistema detecta si una dirección ya existe y la reutiliza, vinculando a las personas mediante una tabla intermedia.
-  - Eliminación inteligente de vínculos.
+-   **Gestión de Personas**: Alta, búsqueda, modificación y eliminación con validaciones robustas.
+-   **Gestión de Teléfonos**: Relación **1:N** optimizada.
+-   **Gestión de Direcciones**: Relación **N:M** con reutilización inteligente de direcciones compartidas.
 
 ---
 
 ## 🧰 Tecnologías
 
-- **Lenguaje:** Java (JDK 17+)
-- **Interfaz:** JavaFX
-- **Base de Datos:** MariaDB
-- **Gestión de Dependencias:** Maven
-- **Pruebas:** JUnit 5
+-   **Lenguaje:** Java (JDK 17+)
+-   **Interfaz:** JavaFX
+-   **Arquitectura:** MVC / Capas (Layered Architecture)
+-   **Base de Datos:** MariaDB
+-   **Gestión de Dependencias:** Maven
+-   **Pruebas:** JUnit 5
 
 ---
 
 ## ✅ Requisitos
 
-- **JDK** instalado (versión 17 o superior).
-- **MariaDB Server** instalado y corriendo en el puerto 3306.
-- Cliente SQL para ejecutar el script inicial.
+-   **JDK** instalado (versión 17 o superior).
+-   **MariaDB Server** instalado y corriendo en el puerto 3306.
+-   Cliente SQL para ejecutar el script inicial.
 
 ---
 
 ## 🚀 Instalación y ejecución
 
-### 1. Realizar el script de la agenda en el cliente SQL
+### 1. Preparar la Base de Datos
+
 ### 2. Clonar el repositorio
